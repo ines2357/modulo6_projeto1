@@ -6,12 +6,10 @@ import transportadoras
 
 app = Flask(__name__)
 
-@app.route('/lista_produto', methods=['GET'])
-def lista_produto():
-
-    produtos_disponiveis = ['Arroz', 'Trigo', 'Milho', 'Cevada']
-    pontuacoes_por_produto_localizacao, scores_fornecedores = fornecedores.somar_pontuacoes_por_produto_localizacao()
-    return render_template('index.html', produtos=produtos_disponiveis)
+@app.route('/api/produtos', methods=['GET'])
+def get_produtos():
+    produtos = fornecedores.obter_produtos_disponiveis()
+    return jsonify(produtos)
 
 @app.route('/escolher_produto', methods=['POST'])
 def escolher_produto():
