@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import fornecedores
 import consumidor
 import transportadoras
@@ -6,19 +6,31 @@ import transportadoras
 
 app = Flask(__name__)
 
+# Rota GET para retornar a lista de produtos disponíveis
 @app.route('/api/produtos', methods=['GET'])
 def get_produtos():
-    produtos = fornecedores.obter_produtos_disponiveis()
+    # Obtendo a lista de produtos disponíveis
+    _, _, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()  # Chama a função e pega a lista de produtos
     return jsonify(produtos)
 
+# Rota GET para a página inicial
+@app.route('/')
+def index():
+    # Obtendo a lista de produtos disponíveis
+    _, _, produtos_disponiveis = fornecedores.somar_pontuacoes_por_produto_localizacao()
+    return render_template('index.html', produtos=produtos_disponiveis)
+
+# Rota POST para processar o produto escolhido
 @app.route('/escolher_produto', methods=['POST'])
 def escolher_produto():
-    produto_nome = request.form['produto_nome']
-    produto_nome = consumidor.escolher_produto(produto_nome)
-    
-    pontuacoes_por_produto_localizacao, scores_fornecedores = fornecedores.somar_pontuacoes_por_produto_localizacao()
+    produto_nome = request.form['produto_nome']  # Produto escolhido pelo usuário
+    produto_nome = consumidor.escolher_produto(produto_nome)  # Supondo que você tem uma função para processar a escolha
+
+    # Calcula os impactos ambientais
+    pontuacoes_por_produto_localizacao, scores_fornecedores, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()
     pontuacoes_por_transportadora_origem, scores_transportadoras = transportadoras.somar_pontuacoes_por_transportadora_origem()
 
+    # Calculando os impactos ambientais por fornecedor
     impactos_fornecedores = [
         (localizacao, pontuacao) 
         for (produto, localizacao), pontuacao in pontuacoes_por_produto_localizacao.items() 
@@ -39,20 +51,20 @@ def escolher_produto():
         impacto_total = impacto_fornecedor + impacto_transporte
         impactos_totais.append((localizacao, impacto_total))
 
+    # Encontrar o local com menor impacto
     menor_impacto = min(impactos_totais, key=lambda x: x[1])
     localizacao_menor_impacto, impacto_total = menor_impacto
 
+    # Renderizar a página de resultado com os dados
     return render_template('resultado.html', 
                            produto=produto_nome,
                            impactos=impactos_totais, 
                            menor_impacto=(localizacao_menor_impacto, impacto_total))
 
 
-
-
 @app.route('/resumo_impactos')
 def resumo_impactos():
-    pontuacoes_por_produto_localizacao, scores_fornecedores = fornecedores.somar_pontuacoes_por_produto_localizacao()
+    pontuacoes_por_produto_localizacao, scores_fornecedores, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()
     pontuacoes_por_transportadora_origem, scores_transportadoras = transportadoras.somar_pontuacoes_por_transportadora_origem()
 
     dados_resumo = []

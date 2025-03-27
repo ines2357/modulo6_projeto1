@@ -49,13 +49,10 @@
                 <form action="/escolher_produto" method="POST">
                     <label for="produto_nome">Selecione um produto:</label>
                     <select name="produto_nome" id="produto_nome">
-                        {% for produto in produtos %}
-                            <option value="{{ produto }}" {% if produto == produto_escolhido %}selected{% endif %}>{{ produto }}</option>
-                        {% endfor %}
+                        <!-- As opções de produtos serão carregadas aqui via JavaScript -->
                     </select>
                     <button type="submit">Escolher Produto</button>
                 </form>
-
 
                 <hr>
                 <p>Caso pretenda obter mais informações relativamente ao impacto ambiental dos vários produtos disponíveis clique:</p>
@@ -66,7 +63,7 @@
                     <div class="impacto">
                         <h2>Impacto Ambiental do Produto: {{ produto_escolhido }}</h2>
 
-                        {% if menor_impacto %}
+                        {% if menor_impacto %} 
                             <p><strong>Localização com menor impacto:</strong> {{ menor_impacto[0] }}</p>
                             <p><strong>Impacto total:</strong> {{ menor_impacto[1] }}</p>
                         {% else %}
@@ -105,6 +102,24 @@
     <footer>
         <p>&copy; 2025 Continente - Centro Comercial Colombo. Todos os direitos reservados.</p>
     </footer>
+
+    <script>
+        // Função para buscar os produtos da API
+        fetch('/api/produtos')
+            .then(response => response.json())
+            .then(data => {
+                const selectElement = document.getElementById('produto_nome');
+                data.forEach(produto => {
+                    const option = document.createElement('option');
+                    option.value = produto;
+                    option.textContent = produto;
+                    selectElement.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar os produtos:', error);
+            });
+    </script>
 </body>
 </html>
 
