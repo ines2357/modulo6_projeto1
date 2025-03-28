@@ -117,7 +117,6 @@ def render_escolher_produto():
                            impactos=impactos_totais, 
                            menor_impacto=(localizacao_menor_impacto, impacto_total))
 
-from flask import jsonify
 
 @app.route('/api/resumo_impactos', methods=['GET'])
 def api_resumo_impactos():
@@ -208,6 +207,17 @@ def resumo_impactos():
 
     return render_template('resumo_impactos.html', dados_resumo=dados_resumo)
 
+@app.route('/api/historico', methods=['GET'])
+def api_historico():
+    caminho_arquivo = './historico_de_escolhas.txt'
+    
+    try:
+        with open(caminho_arquivo, "r") as arquivo:
+            escolhas = arquivo.readlines()
+    except FileNotFoundError:
+        escolhas = []
+    
+    return jsonify({'escolhas': escolhas})
 
 @app.route('/historico')
 def historico():

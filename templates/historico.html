@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Histórico de Escolhas</title>
     <style>
-        
         html, body {
             height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
 
@@ -52,22 +51,13 @@
         <div class="container content">
             <h1>Histórico de Escolhas</h1>
 
-            {% if escolhas %}
-                <table>
-                    <tr>
-                        <th style="text-align: center;">Data e Hora</th>
-                        <th style="text-align: center;">Produto Escolhido</th>
-                    </tr>
-                    {% for escolha in escolhas %}
-                        <tr>
-                            <td style="text-align: center;">{{ escolha.split(": ")[0] }}</td>
-                            <td style="text-align: center;">{{ escolha.split(": ")[1] }}</td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            {% else %}
-                <p>Nenhuma escolha registrada ainda.</p>
-            {% endif %}
+            <table id="historico-table">
+                <tr>
+                    <th style="text-align: center;">Data e Hora</th>
+                    <th style="text-align: center;">Produto Escolhido</th>
+                </tr>
+                <!-- As linhas serão preenchidas com JavaScript -->
+            </table>
 
             <p><a href="/">Voltar à Página Inicial</a></p>
         </div>
@@ -76,6 +66,45 @@
     <footer>
         <p>&copy; 2025 Continente - Centro Comercial Colombo. Todos os direitos reservados.</p>
     </footer>
+
+    <script>
+        // Função para preencher a tabela com os dados do histórico
+        function preencherTabela(historico) {
+            const tableBody = document.querySelector("#historico-table");
+
+            if (historico.length === 0) {
+                const row = document.createElement("tr");
+                row.innerHTML = "<td colspan='2' style='text-align: center;'>Nenhuma escolha registrada ainda.</td>";
+                tableBody.appendChild(row);
+            } else {
+                historico.forEach(escolha => {
+                    const row = document.createElement("tr");
+                    const [dataHora, produtoEscolhido] = escolha.split(": ");
+
+                    row.innerHTML = `
+                        <td style="text-align: center;">${dataHora}</td>
+                        <td style="text-align: center;">${produtoEscolhido}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        }
+
+        // Função para buscar os dados da API e preencher a tabela
+        async function buscarHistorico() {
+            try {
+                const response = await fetch('/api/historico');
+                const data = await response.json();
+                preencherTabela(data.escolhas);
+            } catch (error) {
+                console.error("Erro ao buscar histórico:", error);
+            }
+        }
+
+        // Carregar os dados ao carregar a página
+        window.onload = buscarHistorico;
+    </script>
 </body>
 </html>
+
 
