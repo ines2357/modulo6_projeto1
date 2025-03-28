@@ -74,7 +74,44 @@
     </div>
     <footer>
         <p>&copy; 2025 Continente - Centro Comercial Colombo. Todos os direitos reservados.</p>
-    </footer>        
+    </footer>  
+    
+    <script>
+        // Pega o nome do produto do template (passado no Jinja)
+        const produtoNome = "{{ produto }}";  // A variável produto é passada do backend para o template
+
+        // Envia a requisição POST para a API /api/escolher_produto
+        fetch('/api/escolher_produto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',  // Envia os dados como JSON
+                },
+                body: JSON.stringify({ produto_nome: produtoNome })  // Envia o nome do produto
+            })
+            .then(response => response.json())  // Converte a resposta em JSON
+            .then(data => {
+                // Limpa a área de impactos antes de mostrar os novos resultados
+                const impactoContainer = document.getElementById('impactos');
+                impactoContainer.innerHTML = '';
+
+                // Exibe os impactos totais
+                data.impactos_totais.forEach(impacto => {
+                    const div = document.createElement('div');
+                    div.textContent = `Localização: ${impacto.localizacao} | Impacto Total: ${impacto.impacto_total}`;
+                    impactoContainer.appendChild(div);
+                });
+
+                // Exibe o local com o menor impacto
+                const menorImpacto = data.menor_impacto;
+                const divMenorImpacto = document.createElement('div');
+                divMenorImpacto.textContent = `Local com menor impacto: ${menorImpacto.localizacao} | Impacto Total: ${menorImpacto.impacto_total}`;
+                impactoContainer.appendChild(divMenorImpacto);
+            })
+            .catch(error => {
+                console.error('Erro ao processar a requisição:', error);
+            });
+    </script>
+    
 </body>
 </html>
 

@@ -20,9 +20,65 @@ def index():
     _, _, produtos_disponiveis = fornecedores.somar_pontuacoes_por_produto_localizacao()
     return render_template('index.html', produtos=produtos_disponiveis)
 
-# Rota POST para processar o produto escolhido
+# Rota POST para processar o produto escolhido e retornar os impactos ambientais (API)
+@app.route('/api/escolher_produto', methods=['POST'])
+def api_escolher_produto():
+    # Obtém o nome do produto enviado no corpo da requisição
+    data = request.get_json()  # Espera que a requisição tenha um corpo JSON
+    produto_nome = data.get('produto_nome')  # Produto escolhido pelo usuário
+    
+    if not produto_nome:
+        return jsonify({"error": "O nome do produto é necessário"}), 400
+
+    # Processa a escolha do produto
+    produto_nome = consumidor.escolher_produto(produto_nome)
+
+    # Calcula os impactos ambientais
+    pontuacoes_por_produto_localizacao, scores_fornecedores, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()
+    pontuacoes_por_transportadora_origem, scores_transportadoras = transportadoras.somar_pontuacoes_por_transportadora_origem()
+
+    # Calculando os impactos ambientais por fornecedor
+    impactos_fornecedores = [
+        (localizacao, pontuacao) 
+        for (produto, localizacao), pontuacao in pontuacoes_por_produto_localizacao.items() 
+        if produto == produto_nome
+    ]
+    
+    impactos_transportadoras = [
+        (origem_percurso, pontuacao) 
+        for (transportadora, origem_percurso), pontuacao in pontuacoes_por_transportadora_origem.items()
+    ]
+    
+    impactos_totais = []
+    for (localizacao, impacto_fornecedor) in impactos_fornecedores:
+        impacto_transporte = next(
+            (impacto for (origem_percurso, impacto) in impactos_transportadoras if origem_percurso == localizacao),
+            0
+        )
+        impacto_total = impacto_fornecedor + impacto_transporte
+        impactos_totais.append({
+            "localizacao": localizacao,
+            "impacto_total": impacto_total
+        })
+
+    # Encontrar o local com menor impacto
+    menor_impacto = min(impactos_totais, key=lambda x: x["impacto_total"])
+    localizacao_menor_impacto = menor_impacto["localizacao"]
+    impacto_total = menor_impacto["impacto_total"]
+
+    # Retorna o resultado como resposta JSON
+    return jsonify({
+        "produto": produto_nome,
+        "impactos_totais": impactos_totais,
+        "menor_impacto": {
+            "localizacao": localizacao_menor_impacto,
+            "impacto_total": impacto_total
+        }
+    })
+
+# Rota POST para processar o produto escolhido e renderizar a página de resultados (HTML)
 @app.route('/escolher_produto', methods=['POST'])
-def escolher_produto():
+def render_escolher_produto():
     produto_nome = request.form['produto_nome']  # Produto escolhido pelo usuário
     produto_nome = consumidor.escolher_produto(produto_nome)  # Supondo que você tem uma função para processar a escolha
 
@@ -60,7 +116,6 @@ def escolher_produto():
                            produto=produto_nome,
                            impactos=impactos_totais, 
                            menor_impacto=(localizacao_menor_impacto, impacto_total))
-
 
 @app.route('/resumo_impactos')
 def resumo_impactos():
