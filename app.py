@@ -117,6 +117,52 @@ def render_escolher_produto():
                            impactos=impactos_totais, 
                            menor_impacto=(localizacao_menor_impacto, impacto_total))
 
+from flask import jsonify
+
+@app.route('/api/resumo_impactos', methods=['GET'])
+def api_resumo_impactos():
+    pontuacoes_por_produto_localizacao, scores_fornecedores, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()
+    pontuacoes_por_transportadora_origem, scores_transportadoras = transportadoras.somar_pontuacoes_por_transportadora_origem()
+
+    dados_resumo = []
+
+    for (produto, localizacao), pontuacao in scores_fornecedores.items():
+        
+        score_agua = pontuacao[0] if len(pontuacao) > 0 else 0
+        score_eletricidade = pontuacao[1] if len(pontuacao) > 1 else 0
+        score_combustiveis = pontuacao[2] if len(pontuacao) > 2 else 0
+        score_desperdicio = pontuacao[3] if len(pontuacao) > 3 else 0
+        score_contaminacao = pontuacao[4] if len(pontuacao) > 4 else 0
+        score_emissoes = pontuacao[5] if len(pontuacao) > 5 else 0
+
+        transportadora_data = next(
+            (data for (transportadora, origem), data in scores_transportadoras.items() if origem == localizacao),
+            None
+        )
+
+        if transportadora_data:
+            score_combustivel = transportadora_data[0] if len(transportadora_data) > 0 else 0
+            score_emissoes_transporte = transportadora_data[1] if len(transportadora_data) > 1 else 0
+        else:
+            score_combustivel = 0
+            score_emissoes_transporte = 0
+
+        dados_resumo.append({
+            'produto': produto,
+            'localizacao': localizacao,
+            'score_agua': score_agua,
+            'score_eletricidade': score_eletricidade,
+            'score_combustiveis_fornecedor': score_combustiveis,
+            'score_desperdicio': score_desperdicio,
+            'score_contaminacao': score_contaminacao,
+            'score_emissoes': score_emissoes,
+            'score_combustiveis_transportadora': score_combustivel,
+            'score_emissoes_transportadora': score_emissoes_transporte
+        })
+
+    return jsonify(dados_resumo)
+
+
 @app.route('/resumo_impactos')
 def resumo_impactos():
     pontuacoes_por_produto_localizacao, scores_fornecedores, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()

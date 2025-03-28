@@ -55,7 +55,7 @@
 
             <p>A tabela seguinte apresenta os fatores relativos à produção e transporte de produtos que apresentam efeitos nefastos para o ambiente.</p>
             <p>Para determinar o impacto ambiental, utilizou-se uma escala de 1 a 5 para cada categoria, tendo em conta os impactos mínimos e máximos observados em cada uma delas.</p>
-            <table>
+            <table id="impactos-table">
                 <thead>
                     <tr>
                         <th rowspan="3" style="text-align: center;">Produto</th>
@@ -81,21 +81,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                
-                    {% for linha in dados_resumo %}
-                    <tr>
-                        <td style="text-align: center;">{{ linha.produto }}</td>
-                        <td style="text-align: center;">{{ linha.localizacao }}</td>
-                        <td style="text-align: center;">{{ linha.score_agua }}</td>
-                        <td style="text-align: center;">{{ linha.score_eletricidade }}</td>
-                        <td style="text-align: center;">{{ linha.score_combustiveis_fornecedor }}</td>
-                        <td style="text-align: center;">{{ linha.score_desperdicio }}</td>
-                        <td style="text-align: center;">{{ linha.score_contaminacao }}</td>
-                        <td style="text-align: center;">{{ linha.score_emissoes }}</td>
-                        <td style="text-align: center;">{{ linha.score_combustiveis_transportadora }}</td>
-                        <td style="text-align: center;">{{ linha.score_emissoes_transportadora }}</td>
-                    </tr>
-                    {% endfor %}
+                    <!-- A tabela será preenchida dinamicamente com JavaScript -->
                 </tbody>
             </table>
             
@@ -104,9 +90,50 @@
             <p><a href="/">Voltar à página inicial</a></p>
         </div>
     </div>
-      <footer>
+    <footer>
         <p>&copy; 2025 Continente - Centro Comercial Colombo. Todos os direitos reservados.</p>
     </footer>
+
+    <script>
+        // Função para preencher a tabela com os dados da API
+        function preencherTabela(dados) {
+            const tableBody = document.querySelector("#impactos-table tbody");
+            dados.forEach(linha => {
+                const row = document.createElement("tr");
+                
+                // Criando as células da linha
+                row.innerHTML = `
+                    <td style="text-align: center;">${linha.produto}</td>
+                    <td style="text-align: center;">${linha.localizacao}</td>
+                    <td style="text-align: center;">${linha.score_agua}</td>
+                    <td style="text-align: center;">${linha.score_eletricidade}</td>
+                    <td style="text-align: center;">${linha.score_combustiveis_fornecedor}</td>
+                    <td style="text-align: center;">${linha.score_desperdicio}</td>
+                    <td style="text-align: center;">${linha.score_contaminacao}</td>
+                    <td style="text-align: center;">${linha.score_emissoes}</td>
+                    <td style="text-align: center;">${linha.score_combustiveis_transportadora}</td>
+                    <td style="text-align: center;">${linha.score_emissoes_transportadora}</td>
+                `;
+                
+                // Adiciona a linha à tabela
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Função para buscar dados da API e preencher a tabela
+        async function buscarDados() {
+            try {
+                const response = await fetch('/api/resumo_impactos');
+                const dados = await response.json();
+                preencherTabela(dados);
+            } catch (error) {
+                console.error("Erro ao buscar dados:", error);
+            }
+        }
+
+        // Carregar dados ao carregar a página
+        window.onload = buscarDados;
+    </script>
 </body>
 </html>
 
