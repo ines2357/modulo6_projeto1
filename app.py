@@ -2,9 +2,10 @@ from flask import Flask, render_template, request, jsonify
 import fornecedores
 import consumidor
 import transportadoras
-
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app) # Permite CORS para todas as rotas, você pode ajustar se necessário
 
 # Rota GET para retornar a lista de produtos disponíveis
 @app.route('/api/produtos', methods=['GET'])
